@@ -1,1 +1,20 @@
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # REGLAS DE ESTILO Y CALIDAD
+    prefer_const_constructors: true 
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_fields: true 
+    avoid_print: true 
+    
+    # REGLAS DE ORDEN
+    directives_ordering: true 
+    
+    # REGLAS DE DISEÑO
+    sized_box_for_whitespace: true 
+    use_key_in_widget_constructors: true
+    
+    # EXTRAS
+    always_declare_return_types: true 
+    cancel_subscriptions: true 
