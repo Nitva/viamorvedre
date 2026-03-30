@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'core/theme/app_theme.dart';
 import 'screens/export.dart';
 
@@ -14,9 +15,9 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ViaMorvedre',
-      theme: AppTheme.lightTheme, // Tema claro
-      darkTheme: AppTheme.darkTheme, // Tema oscuro
-      themeMode: ThemeMode.system, // Usa el del sistema
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const MyHomePage(),
     );
   }
