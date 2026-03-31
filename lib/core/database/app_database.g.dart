@@ -1242,6 +1242,278 @@ class TripsCompanion extends UpdateCompanion<Trip> {
   }
 }
 
+class $CalendarDatesTable extends CalendarDates
+    with TableInfo<$CalendarDatesTable, CalendarDate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CalendarDatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serviceIdMeta = const VerificationMeta(
+    'serviceId',
+  );
+  @override
+  late final GeneratedColumn<String> serviceId = GeneratedColumn<String>(
+    'service_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<String> date = GeneratedColumn<String>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _exceptionTypeMeta = const VerificationMeta(
+    'exceptionType',
+  );
+  @override
+  late final GeneratedColumn<int> exceptionType = GeneratedColumn<int>(
+    'exception_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serviceId, date, exceptionType];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'calendar_dates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CalendarDate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('service_id')) {
+      context.handle(
+        _serviceIdMeta,
+        serviceId.isAcceptableOrUnknown(data['service_id']!, _serviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serviceIdMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('exception_type')) {
+      context.handle(
+        _exceptionTypeMeta,
+        exceptionType.isAcceptableOrUnknown(
+          data['exception_type']!,
+          _exceptionTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_exceptionTypeMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serviceId, date};
+  @override
+  CalendarDate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CalendarDate(
+      serviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}service_id'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}date'],
+      )!,
+      exceptionType: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}exception_type'],
+      )!,
+    );
+  }
+
+  @override
+  $CalendarDatesTable createAlias(String alias) {
+    return $CalendarDatesTable(attachedDatabase, alias);
+  }
+}
+
+class CalendarDate extends DataClass implements Insertable<CalendarDate> {
+  final String serviceId;
+  final String date;
+  final int exceptionType;
+  const CalendarDate({
+    required this.serviceId,
+    required this.date,
+    required this.exceptionType,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['service_id'] = Variable<String>(serviceId);
+    map['date'] = Variable<String>(date);
+    map['exception_type'] = Variable<int>(exceptionType);
+    return map;
+  }
+
+  CalendarDatesCompanion toCompanion(bool nullToAbsent) {
+    return CalendarDatesCompanion(
+      serviceId: Value(serviceId),
+      date: Value(date),
+      exceptionType: Value(exceptionType),
+    );
+  }
+
+  factory CalendarDate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CalendarDate(
+      serviceId: serializer.fromJson<String>(json['serviceId']),
+      date: serializer.fromJson<String>(json['date']),
+      exceptionType: serializer.fromJson<int>(json['exceptionType']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serviceId': serializer.toJson<String>(serviceId),
+      'date': serializer.toJson<String>(date),
+      'exceptionType': serializer.toJson<int>(exceptionType),
+    };
+  }
+
+  CalendarDate copyWith({
+    String? serviceId,
+    String? date,
+    int? exceptionType,
+  }) => CalendarDate(
+    serviceId: serviceId ?? this.serviceId,
+    date: date ?? this.date,
+    exceptionType: exceptionType ?? this.exceptionType,
+  );
+  CalendarDate copyWithCompanion(CalendarDatesCompanion data) {
+    return CalendarDate(
+      serviceId: data.serviceId.present ? data.serviceId.value : this.serviceId,
+      date: data.date.present ? data.date.value : this.date,
+      exceptionType: data.exceptionType.present
+          ? data.exceptionType.value
+          : this.exceptionType,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CalendarDate(')
+          ..write('serviceId: $serviceId, ')
+          ..write('date: $date, ')
+          ..write('exceptionType: $exceptionType')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serviceId, date, exceptionType);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CalendarDate &&
+          other.serviceId == this.serviceId &&
+          other.date == this.date &&
+          other.exceptionType == this.exceptionType);
+}
+
+class CalendarDatesCompanion extends UpdateCompanion<CalendarDate> {
+  final Value<String> serviceId;
+  final Value<String> date;
+  final Value<int> exceptionType;
+  final Value<int> rowid;
+  const CalendarDatesCompanion({
+    this.serviceId = const Value.absent(),
+    this.date = const Value.absent(),
+    this.exceptionType = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CalendarDatesCompanion.insert({
+    required String serviceId,
+    required String date,
+    required int exceptionType,
+    this.rowid = const Value.absent(),
+  }) : serviceId = Value(serviceId),
+       date = Value(date),
+       exceptionType = Value(exceptionType);
+  static Insertable<CalendarDate> custom({
+    Expression<String>? serviceId,
+    Expression<String>? date,
+    Expression<int>? exceptionType,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (serviceId != null) 'service_id': serviceId,
+      if (date != null) 'date': date,
+      if (exceptionType != null) 'exception_type': exceptionType,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CalendarDatesCompanion copyWith({
+    Value<String>? serviceId,
+    Value<String>? date,
+    Value<int>? exceptionType,
+    Value<int>? rowid,
+  }) {
+    return CalendarDatesCompanion(
+      serviceId: serviceId ?? this.serviceId,
+      date: date ?? this.date,
+      exceptionType: exceptionType ?? this.exceptionType,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serviceId.present) {
+      map['service_id'] = Variable<String>(serviceId.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<String>(date.value);
+    }
+    if (exceptionType.present) {
+      map['exception_type'] = Variable<int>(exceptionType.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CalendarDatesCompanion(')
+          ..write('serviceId: $serviceId, ')
+          ..write('date: $date, ')
+          ..write('exceptionType: $exceptionType, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1249,6 +1521,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $StopsTable stops = $StopsTable(this);
   late final $StopTimesTable stopTimes = $StopTimesTable(this);
   late final $TripsTable trips = $TripsTable(this);
+  late final $CalendarDatesTable calendarDates = $CalendarDatesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1258,6 +1531,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     stops,
     stopTimes,
     trips,
+    calendarDates,
   ];
 }
 
@@ -1957,6 +2231,170 @@ typedef $$TripsTableProcessedTableManager =
       Trip,
       PrefetchHooks Function()
     >;
+typedef $$CalendarDatesTableCreateCompanionBuilder =
+    CalendarDatesCompanion Function({
+      required String serviceId,
+      required String date,
+      required int exceptionType,
+      Value<int> rowid,
+    });
+typedef $$CalendarDatesTableUpdateCompanionBuilder =
+    CalendarDatesCompanion Function({
+      Value<String> serviceId,
+      Value<String> date,
+      Value<int> exceptionType,
+      Value<int> rowid,
+    });
+
+class $$CalendarDatesTableFilterComposer
+    extends Composer<_$AppDatabase, $CalendarDatesTable> {
+  $$CalendarDatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get serviceId => $composableBuilder(
+    column: $table.serviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get exceptionType => $composableBuilder(
+    column: $table.exceptionType,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CalendarDatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CalendarDatesTable> {
+  $$CalendarDatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get serviceId => $composableBuilder(
+    column: $table.serviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get exceptionType => $composableBuilder(
+    column: $table.exceptionType,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CalendarDatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CalendarDatesTable> {
+  $$CalendarDatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get serviceId =>
+      $composableBuilder(column: $table.serviceId, builder: (column) => column);
+
+  GeneratedColumn<String> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<int> get exceptionType => $composableBuilder(
+    column: $table.exceptionType,
+    builder: (column) => column,
+  );
+}
+
+class $$CalendarDatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CalendarDatesTable,
+          CalendarDate,
+          $$CalendarDatesTableFilterComposer,
+          $$CalendarDatesTableOrderingComposer,
+          $$CalendarDatesTableAnnotationComposer,
+          $$CalendarDatesTableCreateCompanionBuilder,
+          $$CalendarDatesTableUpdateCompanionBuilder,
+          (
+            CalendarDate,
+            BaseReferences<_$AppDatabase, $CalendarDatesTable, CalendarDate>,
+          ),
+          CalendarDate,
+          PrefetchHooks Function()
+        > {
+  $$CalendarDatesTableTableManager(_$AppDatabase db, $CalendarDatesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CalendarDatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CalendarDatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CalendarDatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> serviceId = const Value.absent(),
+                Value<String> date = const Value.absent(),
+                Value<int> exceptionType = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CalendarDatesCompanion(
+                serviceId: serviceId,
+                date: date,
+                exceptionType: exceptionType,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String serviceId,
+                required String date,
+                required int exceptionType,
+                Value<int> rowid = const Value.absent(),
+              }) => CalendarDatesCompanion.insert(
+                serviceId: serviceId,
+                date: date,
+                exceptionType: exceptionType,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CalendarDatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CalendarDatesTable,
+      CalendarDate,
+      $$CalendarDatesTableFilterComposer,
+      $$CalendarDatesTableOrderingComposer,
+      $$CalendarDatesTableAnnotationComposer,
+      $$CalendarDatesTableCreateCompanionBuilder,
+      $$CalendarDatesTableUpdateCompanionBuilder,
+      (
+        CalendarDate,
+        BaseReferences<_$AppDatabase, $CalendarDatesTable, CalendarDate>,
+      ),
+      CalendarDate,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1969,4 +2407,6 @@ class $AppDatabaseManager {
       $$StopTimesTableTableManager(_db, _db.stopTimes);
   $$TripsTableTableManager get trips =>
       $$TripsTableTableManager(_db, _db.trips);
+  $$CalendarDatesTableTableManager get calendarDates =>
+      $$CalendarDatesTableTableManager(_db, _db.calendarDates);
 }

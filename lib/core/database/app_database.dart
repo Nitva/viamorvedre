@@ -46,8 +46,17 @@ class StopTimes extends Table {
   IntColumn get stopSequence => integer().named('stop_sequence')();
 }
 
+class CalendarDates extends Table {
+  TextColumn get serviceId => text().named('service_id')();
+  TextColumn get date => text()();
+  IntColumn get exceptionType => integer().named('exception_type')();
+
+  @override
+  Set<Column> get primaryKey => {serviceId, date};
+}
+
 // Añadimos Trips a la lista de tablas
-@DriftDatabase(tables: [Routes, Stops, StopTimes, Trips])
+@DriftDatabase(tables: [Routes, Stops, StopTimes, Trips, CalendarDates])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -55,16 +64,28 @@ class AppDatabase extends _$AppDatabase {
   int get schemaVersion => 1;
 
   // Consulta corregida usando los nombres generados por Drift (routes, stops, trips, stopTimes)
-  Future<List<TypedResult>> getBusesPorSagunto() {
+  Future<List<TypedResult>> getBusesPorSaguntoParaFecha(DateTime fecha) {
+    // Convierte la fecha al formato GTFS (Ej: 20260331)
+    final dateStr =
+        "${fecha.year}${fecha.month.toString().padLeft(2, '0')}${fecha.day.toString().padLeft(2, '0')}";
+
     final query =
         select(stopTimes).join([
             innerJoin(stops, stops.id.equalsExp(stopTimes.stopId)),
             innerJoin(trips, trips.id.equalsExp(stopTimes.tripId)),
             innerJoin(routes, routes.id.equalsExp(trips.routeId)),
+            // Magia pura: Solo unimos los viajes que tienen registro para HOY en calendar_dates
+            innerJoin(
+              calendarDates,
+              calendarDates.serviceId.equalsExp(trips.serviceId) &
+                  calendarDates.date.equals(dateStr),
+            ),
           ])
           ..where(
-            // Usamos .like() de SQL en lugar de contains()
-            stops.name.like('%Sagunt%') | stops.name.like('%Puerto%'),
+            (routes.longName.like('%Sagunt%') |
+                    routes.longName.like('%Puerto%')) &
+                // exceptionType 1 significa que el servicio OPERA ese día
+                calendarDates.exceptionType.equals(1),
           )
           ..orderBy([OrderingTerm.asc(stopTimes.arrivalTime)]);
 
@@ -78,6 +99,7 @@ class AppDatabase extends _$AppDatabase {
     required List<List<dynamic>> tripsCsv,
     required List<List<dynamic>> stopsCsv,
     required List<List<dynamic>> stopTimesCsv,
+    required List<List<dynamic>> calendarDatesCsv,
   }) async {
     await batch((batch) {
       // 1. Importar Routes
@@ -131,6 +153,19 @@ class AppDatabase extends _$AppDatabase {
             // Ignoramos departure_time (row[2]) si no lo necesitas
             stopId: row[3].toString(),
             stopSequence: int.parse(row[4].toString()),
+          ),
+          mode: InsertMode.insertOrReplace,
+        );
+      }
+
+      // 5. Importar CalendarDates
+      for (var row in calendarDatesCsv.skip(1)) {
+        batch.insert(
+          calendarDates,
+          CalendarDatesCompanion.insert(
+            serviceId: row[0].toString().trim(),
+            date: row[1].toString().trim(),
+            exceptionType: int.parse(row[2].toString().trim()),
           ),
           mode: InsertMode.insertOrReplace,
         );

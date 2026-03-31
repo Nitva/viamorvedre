@@ -35,3 +35,4 @@ flutter:
     - lib/core/assets/trips.txt
     - lib/core/assets/stops.txt
     - lib/core/assets/stop_times.txt
+    - lib/core/assets/calendar_dates.txt
