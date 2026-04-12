@@ -69,12 +69,28 @@ class AppDatabase extends _$AppDatabase {
     final dateStr =
         "${fecha.year}${fecha.month.toString().padLeft(2, '0')}${fecha.day.toString().padLeft(2, '0')}";
 
+    // Todos los IDs de paradas en Puerto Sagunto y Sagunto
+    final puertosagunto = [
+      // Puerto de Sagunto
+      '5104030105', // Av. camp Morvedre 115 (Correus) – Port de Sagunt
+      '5104030215', // Av. Camp de Morvedre front 115 (Correus) – Port de Sagunt
+      '5104030216', // Av. Hispanidad, 2
+      '5104030104', // Av. Hispanidad, 2 front
+      '5104030106', // Av. Camp de Morvedre, 38
+      // Sagunto centro
+      '5104030102', // Hospital de Sagunto
+      '925611410120', // Av. Arquitecto Alfredo Simón [Sagunt]
+      '5256150104', // Av. Arquitecto Alfredo Simón front [Sagunt]
+      '925631000203', // Polideportivo - IES Jorge Juan [Sagunt]
+      '5256150107', // Av. Mediterráneo, 67 - Turismo [Sagunt]
+      '5256150223', // Av. Mediterráneo, 36 - Restaurante Lonja [Sagunt]
+    ];
+
     final query =
         select(stopTimes).join([
             innerJoin(stops, stops.id.equalsExp(stopTimes.stopId)),
             innerJoin(trips, trips.id.equalsExp(stopTimes.tripId)),
             innerJoin(routes, routes.id.equalsExp(trips.routeId)),
-            // Magia pura: Solo unimos los viajes que tienen registro para HOY en calendar_dates
             innerJoin(
               calendarDates,
               calendarDates.serviceId.equalsExp(trips.serviceId) &
@@ -82,14 +98,182 @@ class AppDatabase extends _$AppDatabase {
             ),
           ])
           ..where(
-            (routes.longName.like('%Sagunt%') |
-                    routes.longName.like('%Puerto%')) &
-                // exceptionType 1 significa que el servicio OPERA ese día
+            stops.id.isIn(puertosagunto) &
                 calendarDates.exceptionType.equals(1),
           )
-          ..orderBy([OrderingTerm.asc(stopTimes.arrivalTime)]);
+          ..orderBy([
+            OrderingTerm.asc(stopTimes.arrivalTime),
+            OrderingTerm.asc(trips.id),
+          ]);
 
     return query.get();
+  }
+
+  // Obtiene todas las líneas (routes) que pasan por Puerto Sagunto/Sagunto
+  // SIN filtro de fecha - devuelve todas las líneas disponibles
+  Future<List<Route>> getLineasPorSagunto() async {
+    final puertosagunto = [
+      '5104030105',
+      '5104030215',
+      '5104030216',
+      '5104030104',
+      '5104030106',
+      '5104030102',
+      '925611410120',
+      '5256150104',
+      '925631000203',
+      '5256150107',
+      '5256150223',
+    ];
+
+    // Obtener todos los trips que pasan por esos stops
+    final query = select(routes).join([
+      innerJoin(trips, trips.routeId.equalsExp(routes.id)),
+      innerJoin(stopTimes, stopTimes.tripId.equalsExp(trips.id)),
+      innerJoin(stops, stops.id.equalsExp(stopTimes.stopId)),
+    ])..where(stops.id.isIn(puertosagunto));
+
+    final results = await query.get();
+
+    // Extraer routes únicas
+    final routesSet = <String, Route>{};
+    for (final row in results) {
+      final route = row.readTable(routes);
+      routesSet[route.id] = route;
+    }
+
+    return routesSet.values.toList();
+  }
+
+  // Obtiene TODAS las líneas con sus viajes para hoy EN UNA SOLA QUERY
+  // Devuelve Map<routeId, {route: Route, viajes: int}>
+  Future<Map<String, dynamic>> getLineasConViajesParaHoy() async {
+    final hoy = DateTime.now();
+    final dateStr =
+        "${hoy.year}${hoy.month.toString().padLeft(2, '0')}${hoy.day.toString().padLeft(2, '0')}";
+
+    final puertosagunto = [
+      '5104030105',
+      '5104030215',
+      '5104030216',
+      '5104030104',
+      '5104030106',
+      '5104030102',
+      '925611410120',
+      '5256150104',
+      '925631000203',
+      '5256150107',
+      '5256150223',
+    ];
+
+    // Query que trae TODAS las líneas con sus viajes hoy
+    final query = select(routes).join([
+      innerJoin(trips, trips.routeId.equalsExp(routes.id)),
+      leftOuterJoin(
+        calendarDates,
+        calendarDates.serviceId.equalsExp(trips.serviceId) &
+            calendarDates.date.equals(dateStr) &
+            calendarDates.exceptionType.equals(1),
+      ),
+      innerJoin(stopTimes, stopTimes.tripId.equalsExp(trips.id)),
+      innerJoin(stops, stops.id.equalsExp(stopTimes.stopId)),
+    ])..where(stops.id.isIn(puertosagunto));
+
+    final results = await query.get();
+
+    // Procesar: agrupar por route y contar viajes con servicio hoy
+    final lineasMap = <String, dynamic>{};
+    final viajesHoyPorRuta =
+        <String, Set<String>>{}; // routeId -> set de tripIds
+
+    for (final row in results) {
+      final route = row.readTable(routes);
+      final trip = row.readTable(trips);
+      final calendarDate = row.readTableOrNull(
+        calendarDates,
+      ); // Puede ser null si no hay servicio
+
+      if (!lineasMap.containsKey(route.id)) {
+        lineasMap[route.id] = {'route': route, 'viajes': 0};
+        viajesHoyPorRuta[route.id] = <String>{};
+      }
+
+      // Solo contar viajes que tienen servicio hoy
+      if (calendarDate != null) {
+        viajesHoyPorRuta[route.id]!.add(trip.id);
+      }
+    }
+
+    // Actualizar conteo de viajes
+    for (final entry in lineasMap.entries) {
+      entry.value['viajes'] = viajesHoyPorRuta[entry.key]?.length ?? 0;
+    }
+
+    return lineasMap;
+  }
+
+  // Verifica si una línea tiene servicio en una fecha específica
+  Future<bool> hasServiceToday(String routeId, DateTime fecha) async {
+    final dateStr =
+        "${fecha.year}${fecha.month.toString().padLeft(2, '0')}${fecha.day.toString().padLeft(2, '0')}";
+
+    final query =
+        select(trips).join([
+            innerJoin(
+              calendarDates,
+              calendarDates.serviceId.equalsExp(trips.serviceId) &
+                  calendarDates.date.equals(dateStr) &
+                  calendarDates.exceptionType.equals(1),
+            ),
+          ])
+          ..where(trips.routeId.equals(routeId))
+          ..limit(1);
+
+    final results = await query.get();
+    return results.isNotEmpty;
+  }
+
+  // Obtiene el conteo de viajes de una línea para una fecha específica
+  // y filtra solo los que pasan por Puerto Sagunto/Sagunto
+  Future<int> getViajesPorLineaYFecha(String routeId, DateTime fecha) async {
+    final dateStr =
+        "${fecha.year}${fecha.month.toString().padLeft(2, '0')}${fecha.day.toString().padLeft(2, '0')}";
+
+    final puertosagunto = [
+      '5104030105',
+      '5104030215',
+      '5104030216',
+      '5104030104',
+      '5104030106',
+      '5104030102',
+      '925611410120',
+      '5256150104',
+      '925631000203',
+      '5256150107',
+      '5256150223',
+    ];
+
+    final query = select(trips).join([
+      innerJoin(
+        calendarDates,
+        calendarDates.serviceId.equalsExp(trips.serviceId) &
+            calendarDates.date.equals(dateStr) &
+            calendarDates.exceptionType.equals(1),
+      ),
+      innerJoin(stopTimes, stopTimes.tripId.equalsExp(trips.id)),
+      innerJoin(stops, stops.id.equalsExp(stopTimes.stopId)),
+    ])..where(trips.routeId.equals(routeId) & stops.id.isIn(puertosagunto));
+
+    final results = await query.get();
+
+    // Contar trips únicos
+    final tripsUnicos = <String>{};
+    for (final row in results) {
+      final trip = row.readTable(trips);
+      tripsUnicos.add(trip.id);
+    }
+
+    return tripsUnicos.length;
   }
 
   // --- LÓGICA DE IMPORTACIÓN AMPLIADA ---

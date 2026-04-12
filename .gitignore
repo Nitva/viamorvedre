@@ -48,3 +48,5 @@ app.*.map.json
 .env
 .env*
 lib/core/env/env.g.dart
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/Generated.xcconfig
