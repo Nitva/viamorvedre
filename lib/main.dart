@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
-
-// Importa tu archivo de base de datos aquí
-import 'core/database/app_database.dart';
-import 'core/theme/app_theme.dart';
-import 'screens/export.dart';
+import 'package:viamorvedre/core/theme/app_theme.dart';
+import 'package:viamorvedre/features/main_layout.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  final db = AppDatabase();
-  runApp(MainApp(db: db));
+  runApp(const MainApp());
 }
 
 class MainApp extends StatelessWidget {
-  final AppDatabase db;
-
-  const MainApp({super.key, required this.db});
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +17,7 @@ class MainApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: MyHomePage(db: db),
+      home: const MainLayout(),
     );
   }
 }
